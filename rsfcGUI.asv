@@ -571,7 +571,7 @@ y = rsfc.y;
 y = reshape(y,[nY*nX nT]);
 axes(handles.axes1)
 colormap(jet);
-h = imagesc(rsfc.I0.*uint16(rsfc.brain_mask));
+h = imagesc(rsfc.I0.*rsfc.brain_mask);
 set(h, 'ButtonDownFcn', {@mouseclick, handles});
 brainIdx = find(rsfc.brain_mask == 1);
 y = y(brainIdx,:);
@@ -761,7 +761,7 @@ function pushbuttonbrainmask_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global rsfc
-final_brain_mask = false(size(rsfc.I0));
+final_brain_mask = flase(size(rsfc.I0));
 while(1)
   axes(handles.axes1)
   MinMinS = min(rsfc.I0(:)); MaxMaxS = max(rsfc.I0(:));
@@ -791,13 +791,10 @@ while(1)
   hold on;
   plot(Xi,Yi,'color','k');
   hold off;
-  button = questdlg('Are you statisfied with ROI?');
+  button = questdlg('Are you statisfied with ROI');
   if strcmp(button, 'Yes')
-      final_brain_mask(brain_mask==1) = 1;
-      button = questdlg('Do you want to select another ROI?');
-      if ~strcmp(button, 'Yes')
-        break;
-      end
+      idx = find(
+      break;
   end
 end
   if (get(handles.radiobutton4,'Value') == get(handles.radiobutton4,'Max'))
@@ -805,7 +802,7 @@ end
   end
 
 save('rsfc_brainMask.mat','brain_mask','Xi','Yi');
-rsfc.brain_mask = final_brain_mask;
+rsfc.brain_mask = brain_mask;
 rsfc.Xi = Xi;
 rsfc.Yi = Yi;
 
@@ -1605,11 +1602,11 @@ for u = 1:length(X)
     text(X(u),Y(u),'X', 'FontSize', 13);
 end
 
-% axes(handles.axes5)
-% imagesc(rsfc.GCM);
-% for u = 1:length(rsfc.refX)
-%     text(rsfc.refX(u),rsfc.refY(u),'X', 'FontSize', 13);
-% end
+axes(handles.axes5)
+imagesc(rsfc.GCM);
+for u = 1:length(rsfc.refX)
+    text(rsfc.refX(u),rsfc.refY(u),'X', 'FontSize', 13);
+end
 
 
 % --- Executes on button press in radiobutton_globalsignal.
