@@ -18,6 +18,7 @@ tRS [1xnT] - This contains time points where the images were collected. nT is nu
 * If you don't have selected brain region already then use **select brain** button to select the brain regions where you want to analyse the data.
 * This option will allow you to multiple regions on the brain. Once you select the region, it will be saved as rsfc_brainMask in the current workin directory.
 * After selecting the brain region press **Pre-process** button to process the data. 
-* During the preprocess it will ask you select bregma and lambda on the brain image. Please select bregma and lamdba points on top right corner image. This will be
-help to get interhemisphiric connectivity map.
-*
+* preprocessing step does the global signal regression and calculates interhemisphiric connectivity map.
+* In some cases, like for stroke studies, you may need to multiple signal regression instead of global signal regression. So before doing the preprocess please select one of the radio button from **Signal regression options** panel. If you choose MSR(multiple signal regression), please select infarct region before doing preprocessing.
+* During the preprocess it will ask you select bregma and lambda on the brain image. Please select bregma and lamdba points on top right corner image. This will be help to get interhemisphiric connectivity map.
+* To do seed based analysis, press select seed button and then select a seed on the brain to get connectivty map with respective to that seed. If you want to save this map, please select **Save Image** radio button, it will pop open the seed connectivity map after you select the seed. You can save that image. 
