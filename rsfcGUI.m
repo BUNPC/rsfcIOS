@@ -22,7 +22,7 @@ function varargout = rsfcGUI(varargin)
 
 % Edit the above text to modify the response to help rsfcGUI
 
-% Last Modified by GUIDE v2.5 09-Nov-2015 16:11:17
+% Last Modified by GUIDE v2.5 12-Mar-2020 00:52:04
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -511,9 +511,50 @@ rsfc.yunGR = reshape(rsfc.yunGR,[nY nX nT]);
 % subtract global mean
 % if 0
 % check matlab regression also
+if get(handles.radiobutton_noGSR,'Value')
+    ynew = y1';
+elseif get(handles.radiobutton_GSR,'Value')
     yMean = mean(y1,1);
     a = pinv(yMean*yMean')*yMean*y1';
+    size(a)
     ynew = y1'-yMean'*a;
+else
+    infarctIdx = find(rsfc.infarct_mask == 1);
+    yAll = reshape(rsfc.I(:,:,1,:),[nY*nX,nT]);
+    yinfarct = yAll(infarctIdx,:);
+    yinfarctMean = mean(yinfarct,1);
+%     a = pinv(yMean*yMean')*yMean*yinfarct';
+%     yinfarctnew = yinfarct'-yMean'*a;
+    
+    noninfarctIdx = setdiff(brainIdx,infarctIdx);
+    ynoninfarct = yAll(noninfarctIdx,:);
+    ynoninfarctMean = mean(ynoninfarct,1);
+%     a = pinv(yMean*yMean')*yMean*ynoninfarct';
+%     ynoninfarctnew = ynoninfarct'-yMean'*a;
+
+    yMean = [ynoninfarctMean; yinfarctMean];
+    a = pinv(yMean*yMean')*yMean*y1';
+    disp('size  of a is')
+    size(a)
+    ynew = y1'-yMean'*a;
+    
+%     yAll(infarctIdx,:) = yinfarctnew';
+%     yAll(noninfarctIdx,:) = ynoninfarctnew';
+%     
+%     ynew = yAll(brainIdx,:);
+%     ynew = ynew';
+    
+%     noninfarctIdx = setdiff(brainIdx,infarctIdx);
+%     % Selecting the data matrix        
+%     yAll = reshape(rsfc.I(:,:,1,:),[nY*nX,nT]);
+%     yinfarct = yAll(infarctIdx,:);
+%     ynoninfarct = yAll(noninfarctIdx,:);
+%     yinfarctMean = mean(yinfarct,1);
+%     ynoninfarctMean = mean(ynoninfarct,1);
+%     yMean = yinfarctMean.*ynoninfarctMean;
+%     a = pinv(yMean*yMean')*yMean*y1';
+%     ynew = y1'-yMean'*a;
+end
     size(ynew)
 % else 
 %     ynew = y1';
@@ -641,9 +682,14 @@ set(handles.text_globalpower,'String',num2str(globalpower));
 % Left Right Spatial Correlation
 axes(handles.axes6)
 imagesc(rsfc.I0); colormap('gray');
-h = msgbox(' Please select 2 points bregma and lambda in axes 6');
-uiwait(h);
-[y,x] = ginput(2);
+if exist('BLpts.mat','file')
+    load('BLpts.mat')
+else
+    h = msgbox(' Please select 2 points bregma and lambda in axes 6');
+    uiwait(h);
+    [y,x] = ginput(2);
+    save('BLpts.mat','y','x');
+end
 a = y(2)-y(1);
 b = x(1)-x(2);
 c = (y(1)-y(2))*x(1)+(x(2)-x(1))*y(1);
@@ -803,7 +849,7 @@ end
   if (get(handles.radiobutton4,'Value') == get(handles.radiobutton4,'Max'))
     figure; imshow(rsfc.I0,[MinMinS MaxMaxS]); colormap('gray');
   end
-
+brain_mask = final_brain_mask;
 save('rsfc_brainMask.mat','brain_mask','Xi','Yi');
 rsfc.brain_mask = final_brain_mask;
 rsfc.Xi = Xi;
@@ -1795,3 +1841,55 @@ function edit_filterunGR_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in pushbutton_selectInfarctRegion.
+function pushbutton_selectInfarctRegion_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_selectInfarctRegion (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global rsfc
+
+global rsfc
+while(1)
+  axes(handles.axes1)
+  MinMinS = min(rsfc.I0(:)); MaxMaxS = max(rsfc.I0(:));
+  while(1)
+    imagesc(rsfc.I0(:,:,1),[ MinMinS MaxMaxS]); colorbar;
+    colormap('gray');
+    button = questdlg('Are you happy with the image contrast?','Repeat selection or not...','No');
+    if strcmp(button,'No')
+        answer= inputdlg({'Enter minimum intensity level of survey scan image'},'Enter minimum intensity level:',1,{num2str(MinMinS)});  %    {'0'});
+        answer1 = cell2struct(answer, 'number', 1);
+        MinMinS = str2num(answer1.number);
+        answer= inputdlg({'Enter maximum intensity level of survey scan image'},'Enter maximum intensity level:',1,{num2str(MaxMaxS)});  %    {'0'});
+        answer1 = cell2struct(answer, 'number', 1);
+        MaxMaxS = str2num(answer1.number);
+    else 
+        break;
+    end
+  end
+  rsfc.MaxS = MaxMaxS;
+  rsfc.MinS = MinMinS;
+
+  h = msgbox(' Please select the brain region');
+  uiwait(h)
+%   axes(handles.axes6)
+%   imagesc(rsfc.yLRC,[-1 1]); 
+  [brain_mask,Xi,Yi] = roipoly;
+  hold on;
+  plot(Xi,Yi,'color','k');
+  hold off;
+  button = questdlg('Are you statisfied with ROI?');
+  if strcmp(button, 'Yes')
+        break;
+  end
+end
+  if (get(handles.radiobutton4,'Value') == get(handles.radiobutton4,'Max'))
+    figure; imshow(rsfc.I0,[MinMinS MaxMaxS]); colormap('gray');
+  end
+
+% save('rsfc_brainMask.mat','brain_mask','Xi','Yi');
+rsfc.infarct_mask = brain_mask;
+% rsfc.Xi = Xi;
+% rsfc.Yi = Yi;
