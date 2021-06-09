@@ -271,7 +271,7 @@ else
 end
     
 y = rsfc.y;
-h = str2num(get(handles.seedsize,'string'));%Seed dimension will be h*2+1 x h*2+1
+h = str2double(get(handles.seedsize,'string'));
 
 ySeed = squeeze(mean(mean(y(pSeed(2)+[-floor(h/2):floor(h/2)],pSeed(1)+[-floor(h/2):floor(h/2)],:),1),2));
 %   ySeed = squeeze(mean(mean(I(pSeed(2)+[-h:h],pSeed(1)+[-h:h],iLam,lstInc),1),2));
@@ -612,7 +612,7 @@ y = rsfc.y;
 y = reshape(y,[nY*nX nT]);
 axes(handles.axes1)
 colormap(jet);
-h = imagesc(rsfc.I0.*uint16(rsfc.brain_mask));
+h = imagesc(rsfc.I0.*(rsfc.brain_mask));
 set(h, 'ButtonDownFcn', {@mouseclick, handles});
 brainIdx = find(rsfc.brain_mask == 1);
 y = y(brainIdx,:);
@@ -711,8 +711,18 @@ for u = 1:nY
             if ys > nX
                 ys = nX;
             end
-                
-            CR = corr(squeeze(rsfc.y(xs,ys,:)),squeeze(rsfc.y(u,v,:)));
+            
+            h = str2double(get(handles.seedsize,'string'));
+            x1_min = min(max(xs-floor(h/2),1),nY);
+            x1_max = min(max(xs+floor(h/2),1),nY);
+            y1_min = min(max(ys-floor(h/2),1),nY);
+            y1_max = min(max(ys+floor(h/2),1),nY);
+            x2_min = min(max(u-floor(h/2),1),nY);
+            x2_max = min(max(u+floor(h/2),1),nY);
+            y2_min = min(max(v-floor(h/2),1),nY);
+            y2_max = min(max(v+floor(h/2),1),nY);
+%             CR = corr(squeeze(rsfc.y(xs,ys,:)),squeeze(rsfc.y(u,v,:)));
+            CR = corr(squeeze(mean(mean(rsfc.y(x1_min:x1_max,y1_min:y1_max,:),1),2)),squeeze(mean(mean(rsfc.y(x2_min:x2_max,y2_min:y2_max,:),1),2)));
             rsfc.yLRC(xs,ys) = CR;
             rsfc.yLRC(u,v) = CR;
         end
